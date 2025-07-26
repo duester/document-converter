@@ -9,7 +9,7 @@ object `document-converter` extends ScalaModule {
         ivy"dev.zio::zio-json:0.7.44"
     )
 
-    object test extends ScalaTests with TestModule.Munit {
+    object test extends ScalaTests with TestModule.ZioTest {
         override def ivyDeps: T[Agg[Dep]] = Agg(
             ivy"dev.zio::zio-test:2.1.20"
         )
