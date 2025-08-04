@@ -62,7 +62,7 @@ import ru.duester.converter.error.ConversionError.FormatError
 
         toFormatRec(document.nodes)
 
-  def spec: Spec[TestEnvironment & Scope, Any] =
+  def spec: Spec[TestEnvironment, Any] =
     suite("test converter")(
       test("success"):
         assertZIO(new DocumentConverter[String, Int].convert("42"))(
