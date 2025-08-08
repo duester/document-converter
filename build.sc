@@ -16,7 +16,7 @@ object `document-converter` extends ScalaModule, SonatypeCentralPublishModule {
     mvn"dev.zio::zio-json:0.7.44"
   )
 
-  object test extends ScalaTests with TestModule.ZioTest {
+  object test extends ScalaTests, TestModule.ZioTest {
     def mvnDeps = Seq(
       mvn"dev.zio::zio-test:2.1.20"
     )
