@@ -1,25 +1,30 @@
-import mill._
-import mill.scalalib._
-import mill.scalalib.publish._
+//| mill-version: 1.0.3
 
-object `document-converter` extends ScalaModule with PublishModule {
-  def scalaVersion: T[String] = "3.7.1"
-  def publishVersion = "0.0.1"
+import mill.*
+import mill.scalalib.*
+import mill.scalalib.publish.*
 
-  override def ivyDeps: T[Agg[Dep]] = Agg(
-    ivy"dev.zio::zio:2.1.20",
-    ivy"dev.zio::zio-json:0.7.44"
+object `document-converter` extends ScalaModule, SonatypeCentralPublishModule {
+  def scalaVersion = "3.7.1"
+  
+  def publishVersion = "0.0.1-SNAPSHOT"
+
+  def repositories = Seq("https://central.sonatype.com/repository/maven-snapshots")
+
+  def mvnDeps = Seq(
+    mvn"dev.zio::zio:2.1.20",
+    mvn"dev.zio::zio-json:0.7.44"
   )
 
   object test extends ScalaTests with TestModule.ZioTest {
-    override def ivyDeps: T[Agg[Dep]] = Agg(
-      ivy"dev.zio::zio-test:2.1.20"
+    def mvnDeps = Seq(
+      mvn"dev.zio::zio-test:2.1.20"
     )
   }
 
   def pomSettings = PomSettings(
     description = "Converter between different document formats",
-    organization = "ru.duester",
+    organization = "io.github.duester",
     url = "https://github.com/duester/document-converter",
     licenses = Seq(License.MIT),
     versionControl = VersionControl.github("duester", "document-converter"),
