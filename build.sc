@@ -9,8 +9,6 @@ object `document-converter` extends ScalaModule, SonatypeCentralPublishModule {
   
   def publishVersion = "0.1.0"
 
-  def repositories = Seq("https://central.sonatype.com/repository/maven-snapshots")
-
   def mvnDeps = Seq(
     mvn"dev.zio::zio:2.1.20",
     mvn"dev.zio::zio-json:0.7.44"
