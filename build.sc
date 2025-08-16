@@ -7,7 +7,7 @@ import mill.scalalib.publish.*
 object `document-converter` extends ScalaModule, SonatypeCentralPublishModule {
   def scalaVersion = "3.7.1"
   
-  def publishVersion = "0.1.0"
+  def publishVersion = "0.1.1"
 
   def mvnDeps = Seq(
     mvn"dev.zio::zio:2.1.20",
