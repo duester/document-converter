@@ -14,15 +14,15 @@ import zio.json.JsonEncoder
   * @param attributes
   *   map of node attributes (if any)
   */
-case class Node(
+case class IntermediateNode(
     nodeType: String,
-    children: List[Node] = Nil,
+    children: List[IntermediateNode] = Nil,
     attributes: Map[String, String] = Map.empty
 )
 
-object Node:
-  given encoder: JsonEncoder[Node] = DeriveJsonEncoder.gen
-  given decoder: JsonDecoder[Node] = DeriveJsonDecoder.gen
+object IntermediateNode:
+  given encoder: JsonEncoder[IntermediateNode] = DeriveJsonEncoder.gen
+  given decoder: JsonDecoder[IntermediateNode] = DeriveJsonDecoder.gen
 
 /** Structured document representation
   *
@@ -31,11 +31,11 @@ object Node:
   * @param metadata
   *   map of document metadata (if any)
   */
-case class Document(
-    nodes: List[Node] = Nil,
+case class IntermediateDocument(
+    nodes: List[IntermediateNode] = Nil,
     metadata: Map[String, String] = Map.empty
 )
 
-object Document:
-  given encoder: JsonEncoder[Document] = DeriveJsonEncoder.gen
-  given decoder: JsonDecoder[Document] = DeriveJsonDecoder.gen
+object IntermediateDocument:
+  given encoder: JsonEncoder[IntermediateDocument] = DeriveJsonEncoder.gen
+  given decoder: JsonDecoder[IntermediateDocument] = DeriveJsonDecoder.gen

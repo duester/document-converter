@@ -6,8 +6,8 @@ import ru.duester.converter.converter.ToIntermediateConverter
 import ru.duester.converter.converter.ToIntermediateNodeConverter
 import ru.duester.converter.error.ConversionError
 import ru.duester.converter.error.ConversionError.FormatError
-import ru.duester.converter.model.Document
-import ru.duester.converter.model.Node
+import ru.duester.converter.model.IntermediateDocument
+import ru.duester.converter.model.IntermediateNode
 import zio.Exit
 import zio.IO
 import zio.Scope
@@ -39,11 +39,11 @@ object ConverterSpec extends ZIOSpecDefault:
     given srcConverter: ToIntermediateConverter[MySimpleDocument]:
       def toIntermediateDocument(
           document: MySimpleDocument
-      ): IO[ConversionError, Document] =
+      ): IO[ConversionError, IntermediateDocument] =
         ZIO.succeed(
-          Document(
+          IntermediateDocument(
             nodes = List(
-              Node(
+              IntermediateNode(
                 "mysimple",
                 attributes = Map(
                   "string" -> document.string,
@@ -56,15 +56,15 @@ object ConverterSpec extends ZIOSpecDefault:
 
     given destConverter: FromIntermediateConverter[MySimpleDocument]:
       def fromIntermediateDocument(
-          document: Document
+          document: IntermediateDocument
       ): IO[ConversionError, MySimpleDocument] =
         @tailrec
         def getMySimpleDocument(
-            nodes: List[Node]
+            nodes: List[IntermediateNode]
         ): IO[ConversionError, MySimpleDocument] =
           nodes match
             case Nil => ZIO.fail(ConversionError.MissingNode("mysimple"))
-            case Node("mysimple", _, attributes) :: _ =>
+            case IntermediateNode("mysimple", _, attributes) :: _ =>
               (attributes.get("string"), attributes.get("int")) match
                 case (Some(string), Some(intString)) =>
                   intString.toIntOption match
@@ -92,11 +92,11 @@ object ConverterSpec extends ZIOSpecDefault:
     given srcConverter: ToIntermediateNodeConverter[MyDocument, MyNode]:
       def toIntermediateNodes(
           node: MyNode,
-          childrenNodes: List[Node]
-      ): IO[ConversionError, List[Node]] =
+          childrenNodes: List[IntermediateNode]
+      ): IO[ConversionError, List[IntermediateNode]] =
         ZIO.succeed(
           List(
-            Node("my", children = childrenNodes, attributes = node.attributes)
+            IntermediateNode("my", children = childrenNodes, attributes = node.attributes)
           )
         )
 
@@ -109,11 +109,11 @@ object ConverterSpec extends ZIOSpecDefault:
 
     given destConverter: FromIntermediateNodeConverter[MyDocument, MyNode]:
       def fromIntermediateNodes(
-          node: Node,
+          node: IntermediateNode,
           childrenNodes: List[MyNode]
       ): IO[ConversionError, List[MyNode]] =
         node match
-          case Node("my", children, attributes) =>
+          case IntermediateNode("my", children, attributes) =>
             ZIO.succeed(
               List(
                 MyNode(children = childrenNodes, attributes = node.attributes)
@@ -139,24 +139,24 @@ object ConverterSpec extends ZIOSpecDefault:
             MySimpleDocumentGivens.srcConverter
           )
         } yield assert(document)(
-          hasField("nodes", (d: Document) => d.nodes, hasSize(equalTo(1)))
+          hasField("nodes", (d: IntermediateDocument) => d.nodes, hasSize(equalTo(1)))
             && hasField(
               "nodeType",
-              (d: Document) => d.nodes.head.nodeType,
+              (d: IntermediateDocument) => d.nodes.head.nodeType,
               equalTo("mysimple")
             )
             && hasField(
               "attributes",
-              (d: Document) => d.nodes.head.attributes,
+              (d: IntermediateDocument) => d.nodes.head.attributes,
               hasKey("string", equalTo("value"))
                 && hasKey("int", equalTo("42"))
             )
         )
       ,
       test("to_FromIntermediateConverter_success"):
-        val document = Document(
+        val document = IntermediateDocument(
           List(
-            Node(
+            IntermediateNode(
               "mysimple",
               attributes = Map("string" -> "value", "int" -> "42")
             )
@@ -192,48 +192,48 @@ object ConverterSpec extends ZIOSpecDefault:
         } yield assert(document)(
           hasField(
             "metadata",
-            (d: Document) => d.metadata,
+            (d: IntermediateDocument) => d.metadata,
             hasKey("author", equalTo("somebody"))
           )
-            && hasField("nodes", (d: Document) => d.nodes, hasSize(equalTo(1)))
+            && hasField("nodes", (d: IntermediateDocument) => d.nodes, hasSize(equalTo(1)))
             && hasField(
               "nodeType",
-              (d: Document) => d.nodes.head.nodeType,
+              (d: IntermediateDocument) => d.nodes.head.nodeType,
               equalTo("my")
             )
             && hasField(
               "attributes",
-              (d: Document) => d.nodes.head.attributes,
+              (d: IntermediateDocument) => d.nodes.head.attributes,
               hasKey("key1", equalTo("value1"))
             )
             && hasField(
               "children",
-              (d: Document) => d.nodes.head.children,
+              (d: IntermediateDocument) => d.nodes.head.children,
               hasSize(equalTo(1))
             )
             && hasField(
               "nodeType",
-              (d: Document) => d.nodes.head.children.head.nodeType,
+              (d: IntermediateDocument) => d.nodes.head.children.head.nodeType,
               equalTo("my")
             )
             && hasField(
               "attributes",
-              (d: Document) => d.nodes.head.children.head.attributes,
+              (d: IntermediateDocument) => d.nodes.head.children.head.attributes,
               hasKey("key2", equalTo("value2"))
             )
             && hasField(
               "children",
-              (d: Document) => d.nodes.head.children.head.children,
+              (d: IntermediateDocument) => d.nodes.head.children.head.children,
               isEmpty
             )
         )
       ,
       test("to_FromIntermediateNodeConverter_success"):
-        val document = Document(
+        val document = IntermediateDocument(
           List(
-            Node(
+            IntermediateNode(
               "my",
-              List(Node("my", attributes = Map("key2" -> "value2"))),
+              List(IntermediateNode("my", attributes = Map("key2" -> "value2"))),
               Map("key1" -> "value1")
             )
           ),
@@ -303,7 +303,7 @@ object ConverterSpec extends ZIOSpecDefault:
         } yield assert(tgtDocument)(equalTo(srcDocument))
       ,
       test("to_FromIntermediateConverter_failure_MissingNode"):
-        val document = Document(Nil)
+        val document = IntermediateDocument(Nil)
         for {
           exit <- document.to(using MySimpleDocumentGivens.destConverter).exit
         } yield assertTrue(
@@ -311,7 +311,7 @@ object ConverterSpec extends ZIOSpecDefault:
         )
       ,
       test("to_FromIntermediateConverter_failure_MissingAttribute"):
-        val document = Document(List(Node("mysimple")))
+        val document = IntermediateDocument(List(IntermediateNode("mysimple")))
         for {
           exit <- document.to(using MySimpleDocumentGivens.destConverter).exit
         } yield assertTrue(
@@ -321,9 +321,9 @@ object ConverterSpec extends ZIOSpecDefault:
         )
       ,
       test("to_FromIntermediateConverter_failure_FormatError"):
-        val document = Document(
+        val document = IntermediateDocument(
           List(
-            Node(
+            IntermediateNode(
               "mysimple",
               attributes = Map("string" -> "value", "int" -> "not an int")
             )
@@ -338,7 +338,7 @@ object ConverterSpec extends ZIOSpecDefault:
         )
       ,
       test("to_FromIntermediateNodeConverter_failure_MissingNode_noNodes"):
-        val document = Document(Nil)
+        val document = IntermediateDocument(Nil)
         for {
           exit <- document.to(using MyDocumentGivens.destConverter).exit
         } yield assertTrue(exit == Exit.fail(ConversionError.MissingNode("my")))
@@ -346,7 +346,7 @@ object ConverterSpec extends ZIOSpecDefault:
       test(
         "to_FromIntermediateNodeConverter_failure_MissingNode_wrongNodeType"
       ):
-        val document = Document(List(Node("wrong")))
+        val document = IntermediateDocument(List(IntermediateNode("wrong")))
         for {
           exit <- document.to(using MyDocumentGivens.destConverter).exit
         } yield assertTrue(exit == Exit.fail(ConversionError.MissingNode("my")))

@@ -1,8 +1,8 @@
 package ru.duester.converter.converter
 
 import ru.duester.converter.error.ConversionError
-import ru.duester.converter.model.Document
-import ru.duester.converter.model.Node
+import ru.duester.converter.model.IntermediateDocument
+import ru.duester.converter.model.IntermediateNode
 import zio.IO
 import zio.ZIO
 
@@ -18,7 +18,7 @@ trait ToIntermediateConverter[TDocument]:
     * @param document
     *   source document
     */
-  def toIntermediateDocument(document: TDocument): IO[ConversionError, Document]
+  def toIntermediateDocument(document: TDocument): IO[ConversionError, IntermediateDocument]
 
 /** Type class for converting document as a whole from intermediate type to
   * target type
@@ -33,7 +33,7 @@ trait FromIntermediateConverter[TDocument]:
     *   intermediate document
     */
   def fromIntermediateDocument(
-      document: Document
+      document: IntermediateDocument
   ): IO[ConversionError, TDocument]
 
 /** Type class for converting document from source type to intermediate type via
@@ -55,8 +55,8 @@ trait ToIntermediateNodeConverter[TDocument, TNode]:
     */
   def toIntermediateNodes(
       node: TNode,
-      childrenNodes: List[Node]
-  ): IO[ConversionError, List[Node]]
+      childrenNodes: List[IntermediateNode]
+  ): IO[ConversionError, List[IntermediateNode]]
 
   /** Gets nodes from source document
     *
@@ -97,7 +97,7 @@ trait FromIntermediateNodeConverter[TDocument, TNode]:
     *   intermediate children nodes, already converted to target type
     */
   def fromIntermediateNodes(
-      node: Node,
+      node: IntermediateNode,
       childrenNodes: List[TNode]
   ): IO[ConversionError, List[TNode]]
 
@@ -122,7 +122,7 @@ extension [TDocument](d: TDocument)
     */
   def toIntermediate(using
       converter: ToIntermediateConverter[TDocument]
-  ): IO[ConversionError, Document] =
+  ): IO[ConversionError, IntermediateDocument] =
     converter.toIntermediateDocument(d)
 
   /** Converts this document to intermediate type via
@@ -135,8 +135,8 @@ extension [TDocument](d: TDocument)
     */
   def toIntermediate[TNode](using
       converter: ToIntermediateNodeConverter[TDocument, TNode]
-  ): IO[ConversionError, Document] =
-    def mapNode(node: TNode): IO[ConversionError, List[Node]] =
+  ): IO[ConversionError, IntermediateDocument] =
+    def mapNode(node: TNode): IO[ConversionError, List[IntermediateNode]] =
       for {
         childreNodesList <- ZIO.collectAll(
           converter.getChildrenNodes(node).map(mapNode)
@@ -148,9 +148,9 @@ extension [TDocument](d: TDocument)
     for {
       nodesList <- ZIO.collectAll(converter.getNodes(d).map(mapNode))
       nodes = nodesList.flatten
-    } yield Document(nodes, converter.getMetadata(d))
+    } yield IntermediateDocument(nodes, converter.getMetadata(d))
 
-extension (d: Document)
+extension (d: IntermediateDocument)
   /** Converts this document to target type via [[FromIntermediateConverter]].
     * This method is the most flexible. Use it if the other method with
     * [[FromIntermediateNodeConverter]] is not suitable, e.g. if not all nodes
@@ -177,7 +177,7 @@ extension (d: Document)
   def to[TDocument, TNode](using
       converter: FromIntermediateNodeConverter[TDocument, TNode]
   ): IO[ConversionError, TDocument] =
-    def mapNode(node: Node): IO[ConversionError, List[TNode]] =
+    def mapNode(node: IntermediateNode): IO[ConversionError, List[TNode]] =
       for {
         childrenTNodesList <- ZIO.collectAll(node.children.map(mapNode))
         childrenTNodes = childrenTNodesList.flatten
