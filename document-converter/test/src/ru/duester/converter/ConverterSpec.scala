@@ -161,7 +161,7 @@ object ConverterSpec extends ZIOSpecDefault:
             )
         )
       ,
-      test("to_success"):
+      test("toFull_success"):
         val document = IntermediateDocument(
           List(
             IntermediateNode(
