@@ -18,7 +18,9 @@ trait ToIntermediateConverter[TDocument]:
     * @param document
     *   source document
     */
-  def toIntermediateDocument(document: TDocument): IO[ConversionError, IntermediateDocument]
+  def toIntermediateDocument(
+      document: TDocument
+  ): IO[ConversionError, IntermediateDocument]
 
 /** Type class for converting document as a whole from intermediate type to
   * target type
@@ -120,7 +122,7 @@ extension [TDocument](d: TDocument)
     * @param converter
     *   converter to use
     */
-  def toIntermediate(using
+  def toIntermediateFull(using
       converter: ToIntermediateConverter[TDocument]
   ): IO[ConversionError, IntermediateDocument] =
     converter.toIntermediateDocument(d)
@@ -159,7 +161,7 @@ extension (d: IntermediateDocument)
     * @param converter
     *   converter to use
     */
-  def to[TDocument](using
+  def toFull[TDocument](using
       converter: FromIntermediateConverter[TDocument]
   ): IO[ConversionError, TDocument] =
     converter.fromIntermediateDocument(d)

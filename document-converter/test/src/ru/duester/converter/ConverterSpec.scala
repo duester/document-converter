@@ -135,7 +135,7 @@ object ConverterSpec extends ZIOSpecDefault:
       test("toIntermediate_ToIntermediateConverter_success"):
         val srcDocument = MySimpleDocument("value", 42)
         for {
-          document <- srcDocument.toIntermediate(using
+          document <- srcDocument.toIntermediateFull(using
             MySimpleDocumentGivens.srcConverter
           )
         } yield assert(document)(
@@ -163,7 +163,7 @@ object ConverterSpec extends ZIOSpecDefault:
           )
         )
         for {
-          tgtDocument <- document.to(using MySimpleDocumentGivens.destConverter)
+          tgtDocument <- document.toFull(using MySimpleDocumentGivens.destConverter)
         } yield assert(tgtDocument)(
           hasField(
             "string",
@@ -277,10 +277,10 @@ object ConverterSpec extends ZIOSpecDefault:
       test("forth & back_ToIntermediateConverter_success"):
         val srcDocument = MySimpleDocument("value", 42)
         for {
-          document <- srcDocument.toIntermediate(using
+          document <- srcDocument.toIntermediateFull(using
             MySimpleDocumentGivens.srcConverter
           )
-          tgtDocument <- document.to(using MySimpleDocumentGivens.destConverter)
+          tgtDocument <- document.toFull(using MySimpleDocumentGivens.destConverter)
         } yield assert(tgtDocument)(equalTo(srcDocument))
       ,
       test("forth & back_ToIntermediateNodeConverter_success"):
@@ -305,7 +305,7 @@ object ConverterSpec extends ZIOSpecDefault:
       test("to_FromIntermediateConverter_failure_MissingNode"):
         val document = IntermediateDocument(Nil)
         for {
-          exit <- document.to(using MySimpleDocumentGivens.destConverter).exit
+          exit <- document.toFull(using MySimpleDocumentGivens.destConverter).exit
         } yield assertTrue(
           exit == Exit.fail(ConversionError.MissingNode("mysimple"))
         )
@@ -313,7 +313,7 @@ object ConverterSpec extends ZIOSpecDefault:
       test("to_FromIntermediateConverter_failure_MissingAttribute"):
         val document = IntermediateDocument(List(IntermediateNode("mysimple")))
         for {
-          exit <- document.to(using MySimpleDocumentGivens.destConverter).exit
+          exit <- document.toFull(using MySimpleDocumentGivens.destConverter).exit
         } yield assertTrue(
           exit == Exit.fail(
             ConversionError.MissingAttributeError("mysimple", "string/int")
@@ -330,7 +330,7 @@ object ConverterSpec extends ZIOSpecDefault:
           )
         )
         for {
-          exit <- document.to(using MySimpleDocumentGivens.destConverter).exit
+          exit <- document.toFull(using MySimpleDocumentGivens.destConverter).exit
         } yield assertTrue(
           exit == Exit.fail(
             ConversionError.FormatError("mysimple", "int", "not an int")
