@@ -39,16 +39,14 @@ object ConverterSpec extends ZIOSpecDefault:
     given srcConverter: ToIntermediateConverter[MySimpleDocument]:
       def toIntermediateDocument(
           document: MySimpleDocument
-      ): IO[ConversionError, IntermediateDocument] =
-        ZIO.succeed(
-          IntermediateDocument(
-            nodes = List(
-              IntermediateNode(
-                "mysimple",
-                attributes = Map(
-                  "string" -> document.string,
-                  "int" -> document.int.toString
-                )
+      ): IntermediateDocument =
+        IntermediateDocument(
+          nodes = List(
+            IntermediateNode(
+              "mysimple",
+              attributes = Map(
+                "string" -> document.string,
+                "int" -> document.int.toString
               )
             )
           )
@@ -93,14 +91,12 @@ object ConverterSpec extends ZIOSpecDefault:
       def toIntermediateNodes(
           node: MyNode,
           childrenNodes: List[IntermediateNode]
-      ): IO[ConversionError, List[IntermediateNode]] =
-        ZIO.succeed(
-          List(
-            IntermediateNode(
-              "my",
-              children = childrenNodes,
-              attributes = node.attributes
-            )
+      ): List[IntermediateNode] =
+        List(
+          IntermediateNode(
+            "my",
+            children = childrenNodes,
+            attributes = node.attributes
           )
         )
 
@@ -138,11 +134,10 @@ object ConverterSpec extends ZIOSpecDefault:
     suite("ConverterSpec")(
       test("toIntermediateFull_success"):
         val srcDocument = MySimpleDocument("value", 42)
-        for {
-          document <- srcDocument.toIntermediateFull(using
-            MySimpleDocumentGivens.srcConverter
-          )
-        } yield assert(document)(
+        val document = srcDocument.toIntermediateFull(using
+          MySimpleDocumentGivens.srcConverter
+        )
+        assert(document)(
           hasField(
             "nodes",
             (d: IntermediateDocument) => d.nodes,
@@ -195,11 +190,9 @@ object ConverterSpec extends ZIOSpecDefault:
           ),
           Map("author" -> "somebody")
         )
-        for {
-          document <- srcDocument.toIntermediate(using
-            MyDocumentGivens.srcConverter
-          )
-        } yield assert(document)(
+        val document =
+          srcDocument.toIntermediate(using MyDocumentGivens.srcConverter)
+        assert(document)(
           hasField(
             "metadata",
             (d: IntermediateDocument) => d.metadata,
@@ -294,7 +287,8 @@ object ConverterSpec extends ZIOSpecDefault:
       test("forth & back_toIntermediateFull_success"):
         val srcDocument = MySimpleDocument("value", 42)
         for {
-          document <- srcDocument.toIntermediateFull(using
+          _ <- ZIO.succeed(())
+          document = srcDocument.toIntermediateFull(using
             MySimpleDocumentGivens.srcConverter
           )
           tgtDocument <- document.toFull(using
@@ -315,7 +309,8 @@ object ConverterSpec extends ZIOSpecDefault:
           Map("author" -> "somebody")
         )
         for {
-          document <- srcDocument.toIntermediate(using
+          _ <- ZIO.succeed(())
+          document = srcDocument.toIntermediate(using
             MyDocumentGivens.srcConverter
           )
           tgtDocument <- document.to(using MyDocumentGivens.destConverter)
