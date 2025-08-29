@@ -18,9 +18,7 @@ trait ToIntermediateConverter[TDocument]:
     * @param document
     *   source document
     */
-  def toIntermediateDocument(
-      document: TDocument
-  ): IO[ConversionError, IntermediateDocument]
+  def toIntermediateDocument(document: TDocument): IntermediateDocument
 
 /** Type class for converting document as a whole from intermediate type to
   * target type
@@ -58,7 +56,7 @@ trait ToIntermediateNodeConverter[TDocument, TNode]:
   def toIntermediateNodes(
       node: TNode,
       childrenNodes: List[IntermediateNode]
-  ): IO[ConversionError, List[IntermediateNode]]
+  ): List[IntermediateNode]
 
   /** Gets nodes from source document
     *
@@ -124,7 +122,7 @@ extension [TDocument](d: TDocument)
     */
   def toIntermediateFull(using
       converter: ToIntermediateConverter[TDocument]
-  ): IO[ConversionError, IntermediateDocument] =
+  ): IntermediateDocument =
     converter.toIntermediateDocument(d)
 
   /** Converts this document to intermediate type via
@@ -137,20 +135,13 @@ extension [TDocument](d: TDocument)
     */
   def toIntermediate[TNode](using
       converter: ToIntermediateNodeConverter[TDocument, TNode]
-  ): IO[ConversionError, IntermediateDocument] =
-    def mapNode(node: TNode): IO[ConversionError, List[IntermediateNode]] =
-      for {
-        childreNodesList <- ZIO.collectAll(
-          converter.getChildrenNodes(node).map(mapNode)
-        )
-        childrenNodes = childreNodesList.flatten
-        newNodes <- converter.toIntermediateNodes(node, childrenNodes)
-      } yield newNodes
+  ): IntermediateDocument =
+    def mapNode(node: TNode): List[IntermediateNode] =
+      val childrenNodes = converter.getChildrenNodes(node).flatMap(mapNode)
+      converter.toIntermediateNodes(node, childrenNodes)
 
-    for {
-      nodesList <- ZIO.collectAll(converter.getNodes(d).map(mapNode))
-      nodes = nodesList.flatten
-    } yield IntermediateDocument(nodes, converter.getMetadata(d))
+    val nodes = converter.getNodes(d).flatMap(mapNode)
+    IntermediateDocument(nodes, converter.getMetadata(d))
 
 extension (d: IntermediateDocument)
   /** Converts this document to target type via [[FromIntermediateConverter]].
