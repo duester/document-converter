@@ -61,7 +61,7 @@ object ConverterSpec extends ZIOSpecDefault:
             nodes: List[IntermediateNode]
         ): IO[ConversionError, MySimpleDocument] =
           nodes match
-            case Nil => ZIO.fail(ConversionError.MissingNode("mysimple"))
+            case Nil => ZIO.fail(ConversionError.MissingNodeError("mysimple"))
             case IntermediateNode("mysimple", _, attributes) :: _ =>
               (attributes.get("string"), attributes.get("int")) match
                 case (Some(string), Some(intString)) =>
@@ -119,14 +119,14 @@ object ConverterSpec extends ZIOSpecDefault:
                 MyNode(children = childrenNodes, attributes = node.attributes)
               )
             )
-          case _ => ZIO.fail(ConversionError.MissingNode("my"))
+          case _ => ZIO.fail(ConversionError.MissingNodeError("my"))
 
       def getDocument(
           nodes: List[MyNode],
           metadata: Map[String, String]
       ): IO[ConversionError, MyDocument] =
         nodes match
-          case Nil => ZIO.fail(ConversionError.MissingNode("my"))
+          case Nil => ZIO.fail(ConversionError.MissingNodeError("my"))
           case _   => ZIO.succeed(MyDocument(nodes, metadata))
 
   def spec: Spec[TestEnvironment, Any] =
@@ -323,7 +323,7 @@ object ConverterSpec extends ZIOSpecDefault:
             .toFull(using MySimpleDocumentGivens.destConverter)
             .exit
         } yield assertTrue(
-          exit == Exit.fail(ConversionError.MissingNode("mysimple"))
+          exit == Exit.fail(ConversionError.MissingNodeError("mysimple"))
         )
       ,
       test("toFull_failure_MissingAttribute"):
@@ -361,7 +361,7 @@ object ConverterSpec extends ZIOSpecDefault:
         val document = IntermediateDocument(Nil)
         for {
           exit <- document.to(using MyDocumentGivens.destConverter).exit
-        } yield assertTrue(exit == Exit.fail(ConversionError.MissingNode("my")))
+        } yield assertTrue(exit == Exit.fail(ConversionError.MissingNodeError("my")))
       ,
       test(
         "to_failure_MissingNode_wrongNodeType"
@@ -369,5 +369,5 @@ object ConverterSpec extends ZIOSpecDefault:
         val document = IntermediateDocument(List(IntermediateNode("wrong")))
         for {
           exit <- document.to(using MyDocumentGivens.destConverter).exit
-        } yield assertTrue(exit == Exit.fail(ConversionError.MissingNode("my")))
+        } yield assertTrue(exit == Exit.fail(ConversionError.MissingNodeError("my")))
     )

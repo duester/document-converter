@@ -8,7 +8,7 @@ enum ConversionError:
     * @param nodeType
     *   required node type
     */
-  case MissingNode(nodeType: String)
+  case MissingNodeError(nodeType: String)
 
   /** Child node with required type is missing
     *
@@ -17,7 +17,7 @@ enum ConversionError:
     * @param childNodeType
     *   required child node type
     */
-  case MissingChild(nodeType: String, childNodeType: String)
+  case MissingChildError(nodeType: String, childNodeType: String)
 
   /** Node with required attribute is missing
     *
