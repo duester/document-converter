@@ -1,0 +1,1 @@
+https://badge.fury.io/gh/duester%2Fdocument-converter.svg?icon=si%3Agithub
